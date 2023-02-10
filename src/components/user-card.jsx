@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 
 export default UserCard = ({ user }) => {
@@ -38,12 +38,6 @@ const styles = StyleSheet.create({
     padding: 5,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  errorText: {
-    textAlign: 'center',
-    fontStyle: 'italic',
-    fontSize: 16,
-    color: 'black',
   },
   avatar: {
     width: '30%',
