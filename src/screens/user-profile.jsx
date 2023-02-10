@@ -1,22 +1,70 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Button } from 'react-native';
-import { Profile, LoginManager } from 'react-native-fbsdk-next';
+import {
+  View,
+  StyleSheet,
+  Button,
+  Text,
+  ScrollView,
+  KeyboardAvoidingView,
+} from 'react-native';
+import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
+import { useSelector, useDispatch } from 'react-redux';
+//Components
 import UserCard from '../components/user-card';
+import CreateGroupPost from '../components/create-group-post';
+import GroupFeed from '../components/group-feed';
+//Helper
+import Query from '../helper/Queries';
+import Group from '../helper/Group';
+//Actions
+import { loginUser, logoutUser } from '../redux/actions/user-actions';
+import { fetchGroups } from '../redux/actions/group-actions';
+
+//Query parameters
+const USER_PROFILE_PARAMETERS =
+  'id,name,gender,hometown,location,email,birthday,picture{url}';
+const GROUP_LIST_PARAMETERS = 'groups{id,name,administrator}';
 
 export default UserProfile = () => {
-  const [user, setUser] = useState(null);
+  const user = useSelector(state => state.user);
+  const group = useSelector(state => state.group);
+  const groupFeed = useSelector(state => state.groupFeed);
+  const dispatch = useDispatch();
 
-  const retrieveProfile = () => {
-    Profile.getCurrentProfile()
-      .then(profile => {
-        if (profile) {
-          console.log('Profile:', profile);
-          setUser(profile);
-        }
-      })
-      .catch(err => {
-        console.log('Error while retrieving profile:', err);
-      });
+  const handleUserInfoCallback = (error, result) => {
+    if (error) {
+      console.log('Error fetching data: ' + error.response);
+    } else {
+      // console.log('Success fetching data: ', result);
+      //Store the user object into the redux store
+      dispatch(loginUser(result));
+    }
+  };
+
+  const handleGroupListCallback = (error, result) => {
+    if (error) {
+      console.log('Error fetching group list: ' + error.response);
+    } else {
+      const data = Group.filterGroupList(result.groups.data);
+      // console.log('Success fetching group list: ', data);
+      dispatch(fetchGroups(data));
+    }
+  };
+
+  const fetchData = async () => {
+    const result = await AccessToken.getCurrentAccessToken();
+    //Request user information
+    Query.requestInfo(
+      USER_PROFILE_PARAMETERS,
+      result?.accessToken,
+      handleUserInfoCallback
+    );
+    //Request group list
+    Query.requestInfo(
+      GROUP_LIST_PARAMETERS,
+      result?.accessToken,
+      handleGroupListCallback
+    );
   };
 
   const login = () => {
@@ -25,11 +73,7 @@ export default UserProfile = () => {
         if (result.isCancelled) {
           console.log('Login cancelled');
         } else {
-          console.log(
-            'Login success with permissions: ',
-            result.grantedPermissions.toString()
-          );
-          retrieveProfile();
+          fetchData();
         }
       },
       error => {
@@ -40,27 +84,39 @@ export default UserProfile = () => {
 
   const logout = () => {
     LoginManager.logOut();
-    setUser(null);
+    //Remove the user object on logout
+    dispatch(logoutUser());
   };
 
   return (
     <View style={styles.container}>
-      <Button
-        title={user ? 'Logout' : 'Login with Facebook'}
-        onPress={() => (user ? logout() : login())}
-      />
-      <UserCard user={user} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <Button
+            title={user ? 'Logout' : 'Login with Facebook'}
+            onPress={() => (user ? logout() : login())}
+          />
+          {user && <UserCard user={user} />}
+          {user && <CreateGroupPost group={group} />}
+          {user && <GroupFeed feed={groupFeed} />}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
     flex: 1,
     backgroundColor: 'white',
-    alignItems: 'center',
-    paddingHorizontal: '5%',
     paddingTop: 20,
+  },
+  scrollView: {
+    width: '100%',
+    paddingHorizontal: '5%',
+    paddingBottom: 20,
   },
 });

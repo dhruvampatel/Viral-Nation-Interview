@@ -2,15 +2,25 @@ import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 
 export default UserCard = ({ user }) => {
-  if (!user) return null;
-
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Image source={{ uri: user.imageURL }} style={styles.avatar} />
+        <Image source={{ uri: user.picture.data.url }} style={styles.avatar} />
         <View style={styles.profileInfo}>
           <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.userId}>{user.userID}</Text>
+          <Text style={styles.location}>{user.location.name}</Text>
+          <Text style={styles.subContent}>
+            Hometown: <Text style={styles.italic}>{user.hometown.name}</Text>
+          </Text>
+          <Text style={styles.subContent}>
+            Gender: <Text style={styles.italic}>{user.gender}</Text>
+          </Text>
+          <Text style={styles.subContent}>
+            Email: <Text style={styles.italic}>{user.email}</Text>
+          </Text>
+          <Text style={styles.subContent}>
+            Birthday: <Text style={styles.italic}>{user.birthday}</Text>
+          </Text>
         </View>
       </View>
     </View>
@@ -54,9 +64,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
   },
-  userId: {
+  location: {
     fontSize: 12,
     fontStyle: 'italic',
     color: 'grey',
+  },
+  subContent: {
+    fontSize: 12,
+    color: 'black',
+    marginTop: 5,
+  },
+  italic: {
+    fontStyle: 'italic',
   },
 });
